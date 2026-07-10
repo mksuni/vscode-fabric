@@ -7,6 +7,13 @@ import { CreationCapability, FabricItemMetadata } from './definitions';
 // The other icons are themed by adding 'fill="white"' into the .svg files
 export const fabricItemMetadata: Partial<Record<string, FabricItemMetadata>> = {
     /* eslint-disable @typescript-eslint/naming-convention*/
+    'AppBackend': {
+        creationCapability: CreationCapability.preview,
+        creationDescription: vscode.l10n.t('Build and host backend applications and APIs powered by Fabric.'),
+        displayName: vscode.l10n.t('App backend'),
+        displayNamePlural: vscode.l10n.t('App backends'),
+        portalFolder: 'appbackends',
+    },
     'CopyJob': {
         creationCapability: CreationCapability.supported,
         creationDescription: vscode.l10n.t('Makes it easy to copy data in Fabric. Includes full copy, incremental copy, and event-based copy modes.'),
