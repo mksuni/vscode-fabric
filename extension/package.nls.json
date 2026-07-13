@@ -31,6 +31,8 @@
     "extension.filterWorkspaces.title":"Filter Workspaces...",
     "extension.clearWorkspaceFilter.title":"Clear Workspace Filter",
     "extension.editDefinitionFile.title":"Edit",
+    "extension.appBackend.getStarted.title":"Get Started",
+    "extension.appBackend.createRayfinApp.title":"Create Rayfin App",
 
     "extension.submenu.importArtifact.title": "Publish",
 

@@ -8,7 +8,7 @@ import { ReportExtension } from './report/ReportExtension';
 import { SemanticModelExtension } from './semanticModel/SemanticModelExtension';
 import { AppBackendExtension } from './appBackend/AppBackendExtension';
 import { IFabricExtension } from '@microsoft/vscode-fabric-api';
-import { ILogger, TelemetryService } from '@microsoft/vscode-fabric-util';
+import { ILogger, TelemetryService, IFabricEnvironmentProvider } from '@microsoft/vscode-fabric-util';
 import { IFabricExtensionManagerInternal } from '../apis/internal/fabricExtensionInternal';
 import { IWorkspaceFilterManager } from '../workspace/WorkspaceFilterManager';
 
@@ -22,7 +22,8 @@ export class InternalSatelliteManager {
         private telemetryService: TelemetryService,
         private logger: ILogger,
         private extensionManager: IFabricExtensionManagerInternal,
-        private workspaceFilterManager: IWorkspaceFilterManager
+        private workspaceFilterManager: IWorkspaceFilterManager,
+        private fabricEnvironmentProvider: IFabricEnvironmentProvider
     ) {
     }
 
@@ -78,7 +79,9 @@ export class InternalSatelliteManager {
         this.extensionInstances.push(
             new AppBackendExtension(
                 this.context,
-                this.extensionManager
+                this.extensionManager,
+                this.fabricEnvironmentProvider,
+                this.telemetryService
             )
         );
     }
