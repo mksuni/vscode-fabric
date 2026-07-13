@@ -93,6 +93,7 @@ import { FeedbackTreeDataProvider } from './feedback/FeedbackTreeDataProvider';
 import { GitOperator } from './git/GitOperator';
 import { ILocalFolderManager } from './ILocalFolderManager';
 import { InternalSatelliteManager } from './internalSatellites/InternalSatelliteManager';
+import { registerAppBackendCommands } from './internalSatellites/appBackend/commands';
 import { Base64Encoder, IBase64Encoder } from './itemDefinition/ItemDefinitionReader';
 import { LocalFolderManager } from './LocalFolderManager';
 import { ILocalFolderService, LocalFolderService } from './LocalFolderService';
@@ -100,6 +101,10 @@ import { ILocalFolderService, LocalFolderService } from './LocalFolderService';
 let app: FabricVsCodeExtension;
 
 export async function activate(context: vscode.ExtensionContext): Promise<IFabricExtensionManager> {
+    // Register App Backend commands immediately so they are available
+    // even before the full activation completes (avoids "command not found")
+    registerAppBackendCommands(context);
+
     const container = await composeContainer(context);
     app = new FabricVsCodeExtension(container);
     return await app.activate();

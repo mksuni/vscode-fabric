@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { apiVersion, IFabricExtension, IFabricExtensionManager, ILocalProjectTreeNodeProvider } from '@microsoft/vscode-fabric-api';
 import { IFabricEnvironmentProvider, TelemetryService } from '@microsoft/vscode-fabric-util';
-import { registerAppBackendCommands, disposeCommands } from './commands';
+import { bindAppBackendServices, disposeCommands } from './commands';
 
 export class AppBackendExtension implements IFabricExtension, vscode.Disposable {
     public identity: string = 'fabric.internal-satellite-appbackend';
@@ -19,7 +19,7 @@ export class AppBackendExtension implements IFabricExtension, vscode.Disposable 
         telemetryService: TelemetryService
     ) {
         extensionManager.addExtension(this);
-        registerAppBackendCommands(context, fabricEnvironmentProvider, telemetryService);
+        bindAppBackendServices(fabricEnvironmentProvider, telemetryService);
     }
 
     dispose() {

@@ -11,7 +11,7 @@ export class AppBackendWebviewPanel {
     public static show(
         artifact: IArtifact,
         fabricEnvironmentProvider: IFabricEnvironmentProvider,
-        telemetryService: TelemetryService
+        telemetryService?: TelemetryService
     ): void {
         const panelKey = `${artifact.workspaceId}:${artifact.id}`;
 
@@ -41,14 +41,14 @@ export class AppBackendWebviewPanel {
 
         panel.webview.onDidReceiveMessage(async (message) => {
             if (message.command === 'copyToClipboard') {
-                telemetryService.sendTelemetryEvent('appBackend/getStarted/copyCommand', {
+                telemetryService?.sendTelemetryEvent('appBackend/getStarted/copyCommand', {
                     itemType: artifact.type,
                     command: message.text,
                 });
                 await vscode.env.clipboard.writeText(message.text);
                 vscode.window.showInformationMessage(vscode.l10n.t('Copied to clipboard'));
             } else if (message.command === 'copyPrompt') {
-                telemetryService.sendTelemetryEvent('appBackend/getStarted/copyPrompt', {
+                telemetryService?.sendTelemetryEvent('appBackend/getStarted/copyPrompt', {
                     itemType: artifact.type,
                 });
                 const prompt = AppBackendWebviewPanel.getAiPrompt(artifact, baseApiUrl);

@@ -8,10 +8,13 @@ import { AppBackendWebviewPanel } from './AppBackendWebviewPanel';
 
 let commandDisposables: vscode.Disposable[] = [];
 
+/**
+ * Registers App Backend commands early (before full activation completes).
+ * The `createRayfinApp` command works immediately; `getStarted` uses
+ * a late-bound provider/telemetry that gets set once satellites activate.
+ */
 export function registerAppBackendCommands(
     context: vscode.ExtensionContext,
-    fabricEnvironmentProvider: IFabricEnvironmentProvider,
-    telemetryService: TelemetryService
 ): void {
     function registerCommand(
         commandName: string,
@@ -24,21 +27,21 @@ export function registerAppBackendCommands(
 
     registerCommand('vscode-fabric.appBackend.getStarted', async (...cmdArgs) => {
         const treeNode = cmdArgs[0] as ArtifactTreeNode | undefined;
-        if (treeNode?.artifact) {
-            telemetryService.sendTelemetryEvent('appBackend/getStarted', {
+        if (treeNode?.artifact && _fabricEnvironmentProvider) {
+            _telemetryService?.sendTelemetryEvent('appBackend/getStarted', {
                 itemType: treeNode.artifact.type,
                 result: 'Succeeded',
             });
             AppBackendWebviewPanel.show(
                 treeNode.artifact,
-                fabricEnvironmentProvider,
-                telemetryService
+                _fabricEnvironmentProvider,
+                _telemetryService
             );
         }
     });
 
     registerCommand('vscode-fabric.appBackend.createRayfinApp', async () => {
-        telemetryService.sendTelemetryEvent('appBackend/createRayfinApp', {
+        _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
             result: 'Succeeded',
         });
         const terminal = vscode.window.createTerminal({
@@ -49,7 +52,24 @@ export function registerAppBackendCommands(
     });
 }
 
+let _fabricEnvironmentProvider: IFabricEnvironmentProvider | undefined;
+let _telemetryService: TelemetryService | undefined;
+
+/**
+ * Binds the late-resolved services so that commands can use them.
+ * Called from AppBackendExtension after satellite activation.
+ */
+export function bindAppBackendServices(
+    fabricEnvironmentProvider: IFabricEnvironmentProvider,
+    telemetryService: TelemetryService
+): void {
+    _fabricEnvironmentProvider = fabricEnvironmentProvider;
+    _telemetryService = telemetryService;
+}
+
 export function disposeCommands(): void {
     commandDisposables.forEach(d => d.dispose());
     commandDisposables = [];
+    _fabricEnvironmentProvider = undefined;
+    _telemetryService = undefined;
 }
