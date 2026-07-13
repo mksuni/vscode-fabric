@@ -10,8 +10,8 @@ export const fabricItemMetadata: Partial<Record<string, FabricItemMetadata>> = {
     'AppBackend': {
         creationCapability: CreationCapability.preview,
         creationDescription: vscode.l10n.t('Build and host backend applications and APIs powered by Fabric.'),
-        displayName: vscode.l10n.t('App (Preview)'),
-        displayNamePlural: vscode.l10n.t('Apps (Preview)'),
+        displayName: vscode.l10n.t('App'),
+        displayNamePlural: vscode.l10n.t('Apps'),
         iconInformation: { fileName: 'app_backend_32.svg', isThemed: false },
         portalFolder: 'appbackends',
     },
