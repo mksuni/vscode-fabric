@@ -10,7 +10,7 @@ export class AppBackendWebviewPanel {
 
     public static show(
         artifact: IArtifact,
-        fabricEnvironmentProvider: IFabricEnvironmentProvider,
+        fabricEnvironmentProvider?: IFabricEnvironmentProvider,
         telemetryService?: TelemetryService
     ): void {
         const panelKey = `${artifact.workspaceId}:${artifact.id}`;
@@ -58,9 +58,13 @@ export class AppBackendWebviewPanel {
         });
     }
 
-    private static getBaseApiUrl(fabricEnvironmentProvider: IFabricEnvironmentProvider): string {
-        const env = fabricEnvironmentProvider.getCurrent();
-        return env.sharedUri ?? 'https://api.fabric.microsoft.com';
+    private static getBaseApiUrl(fabricEnvironmentProvider?: IFabricEnvironmentProvider): string {
+        try {
+            const env = fabricEnvironmentProvider?.getCurrent();
+            return env?.sharedUri ?? 'https://api.fabric.microsoft.com';
+        } catch {
+            return 'https://api.fabric.microsoft.com';
+        }
     }
 
     private static getAiPrompt(artifact: IArtifact, baseApiUrl: string): string {

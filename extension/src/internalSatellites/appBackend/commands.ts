@@ -27,7 +27,7 @@ export function registerAppBackendCommands(
 
     registerCommand('vscode-fabric.appBackend.getStarted', async (...cmdArgs) => {
         const treeNode = cmdArgs[0] as ArtifactTreeNode | undefined;
-        if (treeNode?.artifact && _fabricEnvironmentProvider) {
+        if (treeNode?.artifact) {
             _telemetryService?.sendTelemetryEvent('appBackend/getStarted', {
                 itemType: treeNode.artifact.type,
                 result: 'Succeeded',
