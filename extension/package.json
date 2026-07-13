@@ -13,6 +13,7 @@
   "engines": {
     "vscode": "^1.77.0"
   },
+  "enabledApiProposals": ["treeViewActiveItem"],
   "categories": [
     "Data Science"
   ],
