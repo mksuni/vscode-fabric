@@ -67,8 +67,7 @@ describe('InternalSatelliteManager', function () {
             telemetryServiceMock.object(),
             loggerMock.object(),
             extensionManagerMock.object(),
-            workspaceFilterManagerMock.object(),
-            fabricEnvironmentProviderMock.object()
+            workspaceFilterManagerMock.object()
         );
         // Assert
         assert.ok(manager.extensionClasses.length >= 2, 'Should have at least two extension classes');
@@ -83,11 +82,10 @@ describe('InternalSatelliteManager', function () {
             telemetryServiceMock.object(),
             loggerMock.object(),
             extensionManagerMock.object(),
-            workspaceFilterManagerMock.object(),
-            fabricEnvironmentProviderMock.object()
+            workspaceFilterManagerMock.object()
         );
         // Act
-        manager.activateAll();
+        manager.activateAll(fabricEnvironmentProviderMock.object());
         const ids = manager.getSatelliteIds();
         // Assert
         assert.ok(Array.isArray(ids), 'getSatelliteIds should return an array');
@@ -103,10 +101,9 @@ describe('InternalSatelliteManager', function () {
             telemetryServiceMock.object(),
             loggerMock.object(),
             extensionManagerMock.object(),
-            workspaceFilterManagerMock.object(),
-            fabricEnvironmentProviderMock.object()
+            workspaceFilterManagerMock.object()
         );
-        manager.activateAll();
+        manager.activateAll(fabricEnvironmentProviderMock.object());
         // Act & Assert
         assert.doesNotThrow(() => manager.dispose(), 'Dispose should not throw');
     });

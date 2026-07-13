@@ -22,8 +22,7 @@ export class InternalSatelliteManager {
         private telemetryService: TelemetryService,
         private logger: ILogger,
         private extensionManager: IFabricExtensionManagerInternal,
-        private workspaceFilterManager: IWorkspaceFilterManager,
-        private fabricEnvironmentProvider: IFabricEnvironmentProvider
+        private workspaceFilterManager: IWorkspaceFilterManager
     ) {
     }
 
@@ -41,7 +40,7 @@ export class InternalSatelliteManager {
         return this.extensionInstances.map((extension) => extension.identity);
     }
 
-    public activateAll() {
+    public activateAll(fabricEnvironmentProvider: IFabricEnvironmentProvider) {
         this.extensionInstances.push(
             new SqlExtension(
                 this.context,
@@ -80,7 +79,7 @@ export class InternalSatelliteManager {
             new AppBackendExtension(
                 this.context,
                 this.extensionManager,
-                this.fabricEnvironmentProvider,
+                fabricEnvironmentProvider,
                 this.telemetryService
             )
         );

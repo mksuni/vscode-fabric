@@ -293,7 +293,8 @@ export class FabricVsCodeWebExtension {
 
         // Activate internal satellites
         const internalSatelliteManager = this.container.get<InternalSatelliteManager>();
-        internalSatelliteManager.activateAll();
+        const fabricEnvironmentProvider = this.container.get<IFabricEnvironmentProvider>();
+        internalSatelliteManager.activateAll(fabricEnvironmentProvider);
         context.subscriptions.push(internalSatelliteManager);
 
         return extensionManager;
