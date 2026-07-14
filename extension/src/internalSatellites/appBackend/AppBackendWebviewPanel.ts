@@ -27,7 +27,6 @@ export class AppBackendWebviewPanel {
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
-                retainContextWhenHidden: true,
             }
         );
 
