@@ -41,11 +41,24 @@ export function registerAppBackendCommands(
     });
 
     registerCommand('vscode-fabric.appBackend.createRayfinApp', async () => {
+        const folders = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: vscode.l10n.t('Select Folder'),
+            title: vscode.l10n.t('Select a folder to create your Rayfin app in'),
+        });
+
+        if (!folders || folders.length === 0) {
+            return;
+        }
+
         _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
             result: 'Succeeded',
         });
         const terminal = vscode.window.createTerminal({
             name: 'Create Rayfin App',
+            cwd: folders[0],
         });
         terminal.show();
         terminal.sendText('npm create @microsoft/rayfin@latest');
