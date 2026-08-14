@@ -46,7 +46,8 @@ export class AppBackendWebviewPanel {
                 });
                 await vscode.env.clipboard.writeText(message.text);
                 vscode.window.showInformationMessage(vscode.l10n.t('Copied to clipboard'));
-            } else if (message.command === 'copyPrompt') {
+            }
+            else if (message.command === 'copyPrompt') {
                 telemetryService?.sendTelemetryEvent('appBackend/getStarted/copyPrompt', {
                     itemType: artifact.type,
                 });
@@ -61,7 +62,8 @@ export class AppBackendWebviewPanel {
         try {
             const env = fabricEnvironmentProvider?.getCurrent();
             return env?.sharedUri ?? 'https://api.fabric.microsoft.com';
-        } catch {
+        }
+        catch {
             return 'https://api.fabric.microsoft.com';
         }
     }
@@ -86,8 +88,8 @@ Help me build this App Backend.`;
         const scaffoldCommand = `npm create @microsoft/rayfin@latest -- "${artifact.displayName}" --workspace "${artifact.workspaceId}" --base-api-url ${baseApiUrl}`;
         const dataAppCommand = `npm create @microsoft/rayfin@latest -- "${artifact.displayName}" --template dataapp --workspace "${artifact.workspaceId}" --base-api-url ${baseApiUrl}`;
         const cdCommand = `cd ${artifact.displayName}`;
-        const devCommand = `npm run dev`;
-        const publishCommand = `npx rayfin up`;
+        const devCommand = 'npm run dev';
+        const publishCommand = 'npx rayfin up';
 
         return /* html */`<!DOCTYPE html>
 <html lang="en">
@@ -278,7 +280,11 @@ Help me build this App Backend.`;
             <span>Using an AI coding agent? Skip the steps below.</span>
         </div>
         <button class="copy-prompt-btn" onclick="copyPrompt()">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0 3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3 12V2h8v2H5v8H3zm9 2H6V5h6v9z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0
+                    3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3
+                    12V2h8v2H5v8H3zm9 2H6V5h6v9z"/>
+            </svg>
             Copy prompt
         </button>
     </div>

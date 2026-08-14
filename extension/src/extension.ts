@@ -221,7 +221,6 @@ export class FabricVsCodeExtension {
             })
         );
 
-
         // Register CodeLens provider for readonly definition files
         const codeLensProvider = new DefinitionFileCodeLensProvider();
         context.subscriptions.push(
@@ -230,7 +229,7 @@ export class FabricVsCodeExtension {
                 codeLensProvider
             )
         );
-        
+
         // Definition file editor decorator
         const editorDecorator = new DefinitionFileEditorDecorator();
         context.subscriptions.push(editorDecorator);
@@ -536,7 +535,8 @@ export class FabricVsCodeExtension {
                             installPreReleaseVersion: true,
                         });
                         installed = !!vscode.extensions.getExtension(mcpExtensionId);
-                    } catch (prereleaseError) {
+                    }
+                    catch (prereleaseError) {
                         logger.warn(`Failed to install prerelease version: ${prereleaseError}`);
                     }
                 }
