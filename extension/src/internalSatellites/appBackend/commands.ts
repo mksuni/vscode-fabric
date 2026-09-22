@@ -14,11 +14,11 @@ let commandDisposables: vscode.Disposable[] = [];
  * a late-bound provider/telemetry that gets set once satellites activate.
  */
 export function registerAppBackendCommands(
-    context: vscode.ExtensionContext,
+    context: vscode.ExtensionContext
 ): void {
     function registerCommand(
         commandName: string,
-        callback: (...args: any[]) => Promise<void>,
+        callback: (...args: any[]) => Promise<void>
     ): void {
         const disposable = vscode.commands.registerCommand(commandName, callback);
         context.subscriptions.push(disposable);
@@ -41,6 +41,16 @@ export function registerAppBackendCommands(
     });
 
     registerCommand('vscode-fabric.appBackend.createRayfinApp', async () => {
+        if (vscode.env.uiKind === vscode.UIKind.Web) {
+            _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
+                result: 'Failed',
+            });
+            vscode.window.showErrorMessage(
+                vscode.l10n.t('Creating a Rayfin app requires the desktop version of Visual Studio Code.')
+            );
+            return;
+        }
+
         const folders = await vscode.window.showOpenDialog({
             canSelectFiles: false,
             canSelectFolders: true,
@@ -50,18 +60,29 @@ export function registerAppBackendCommands(
         });
 
         if (!folders || folders.length === 0) {
+            _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
+                result: 'Canceled',
+            });
             return;
         }
 
-        _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
-            result: 'Succeeded',
-        });
-        const terminal = vscode.window.createTerminal({
-            name: 'Create Rayfin App',
-            cwd: folders[0],
-        });
-        terminal.show();
-        terminal.sendText('npm create @microsoft/rayfin@latest');
+        try {
+            const terminal = vscode.window.createTerminal({
+                name: 'Create Rayfin App',
+                cwd: folders[0],
+            });
+            terminal.show();
+            terminal.sendText('npm create @microsoft/rayfin@latest');
+            _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
+                result: 'Succeeded',
+            });
+        }
+        catch (error) {
+            _telemetryService?.sendTelemetryEvent('appBackend/createRayfinApp', {
+                result: 'Failed',
+            });
+            throw error;
+        }
     });
 }
 

@@ -5,6 +5,12 @@ import * as vscode from 'vscode';
 import { IArtifact } from '@microsoft/vscode-fabric-api';
 import { IFabricEnvironmentProvider, TelemetryService } from '@microsoft/vscode-fabric-util';
 
+type CopyCommandId = 'scaffold' | 'dataApp' | 'changeDirectory' | 'startDevelopment' | 'publish';
+
+type WebviewMessage =
+    | { command: 'copyPrompt' }
+    | { command: 'copyToClipboard'; commandId: CopyCommandId };
+
 export class AppBackendWebviewPanel {
     private static panels: Map<string, vscode.WebviewPanel> = new Map();
 
@@ -36,15 +42,20 @@ export class AppBackendWebviewPanel {
         });
 
         const baseApiUrl = AppBackendWebviewPanel.getBaseApiUrl(fabricEnvironmentProvider);
-        panel.webview.html = AppBackendWebviewPanel.getHtmlContent(artifact, baseApiUrl);
+        const commands = AppBackendWebviewPanel.getCommands(artifact, baseApiUrl);
+        panel.webview.html = AppBackendWebviewPanel.getHtmlContent(panel.webview, artifact, commands);
 
         panel.webview.onDidReceiveMessage(async (message) => {
+            if (!AppBackendWebviewPanel.isWebviewMessage(message)) {
+                return;
+            }
+
             if (message.command === 'copyToClipboard') {
                 telemetryService?.sendTelemetryEvent('appBackend/getStarted/copyCommand', {
                     itemType: artifact.type,
-                    command: message.text,
+                    commandId: message.commandId,
                 });
-                await vscode.env.clipboard.writeText(message.text);
+                await vscode.env.clipboard.writeText(commands[message.commandId]);
                 vscode.window.showInformationMessage(vscode.l10n.t('Copied to clipboard'));
             }
             else if (message.command === 'copyPrompt') {
@@ -56,6 +67,25 @@ export class AppBackendWebviewPanel {
                 vscode.window.showInformationMessage(vscode.l10n.t('AI prompt copied to clipboard'));
             }
         });
+    }
+
+    private static isWebviewMessage(message: unknown): message is WebviewMessage {
+        if (!message || typeof message !== 'object' || !('command' in message)) {
+            return false;
+        }
+
+        if (message.command === 'copyPrompt') {
+            return true;
+        }
+
+        return message.command === 'copyToClipboard'
+            && 'commandId' in message
+            && AppBackendWebviewPanel.isCopyCommandId(message.commandId);
+    }
+
+    private static isCopyCommandId(value: unknown): value is CopyCommandId {
+        return typeof value === 'string'
+            && ['scaffold', 'dataApp', 'changeDirectory', 'startDevelopment', 'publish'].includes(value);
     }
 
     private static getBaseApiUrl(fabricEnvironmentProvider?: IFabricEnvironmentProvider): string {
@@ -84,20 +114,32 @@ Deploy:
 Help me build this App Backend.`;
     }
 
-    private static getHtmlContent(artifact: IArtifact, baseApiUrl: string): string {
-        const scaffoldCommand = `npm create @microsoft/rayfin@latest -- "${artifact.displayName}" --workspace "${artifact.workspaceId}" --base-api-url ${baseApiUrl}`;
-        const dataAppCommand = `npm create @microsoft/rayfin@latest -- "${artifact.displayName}" --template dataapp --workspace "${artifact.workspaceId}" --base-api-url ${baseApiUrl}`;
-        const cdCommand = `cd ${artifact.displayName}`;
-        const devCommand = 'npm run dev';
-        const publishCommand = 'npx rayfin up';
+    private static getCommands(artifact: IArtifact, baseApiUrl: string): Record<CopyCommandId, string> {
+        return {
+            scaffold: `npm create @microsoft/rayfin@latest -- "${artifact.displayName}" --workspace "${artifact.workspaceId}" --base-api-url ${baseApiUrl}`,
+            dataApp: `npm create @microsoft/rayfin@latest -- "${artifact.displayName}" --template dataapp --workspace "${artifact.workspaceId}" --base-api-url ${baseApiUrl}`,
+            changeDirectory: `cd ${artifact.displayName}`,
+            startDevelopment: 'npm run dev',
+            publish: 'npx rayfin up',
+        };
+    }
+
+    private static getHtmlContent(
+        webview: vscode.Webview,
+        artifact: IArtifact,
+        commands: Record<CopyCommandId, string>
+    ): string {
+        const nonce = getNonce();
 
         return /* html */`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Getting Started - ${escapeHtml(artifact.displayName)}</title>
-    <style>
+    <style nonce="${nonce}">
         body {
             font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
             padding: 24px 32px;
@@ -279,7 +321,7 @@ Help me build this App Backend.`;
             <div class="info-icon">i</div>
             <span>Using an AI coding agent? Skip the steps below.</span>
         </div>
-        <button class="copy-prompt-btn" onclick="copyPrompt()">
+        <button class="copy-prompt-btn" data-action="copyPrompt">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0
                     3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3
@@ -304,8 +346,8 @@ Help me build this App Backend.`;
         </div>
         <div class="step-description">Run this command to scaffold your project</div>
         <div class="code-block">
-            <pre><code>${escapeHtml(scaffoldCommand)}</code></pre>
-            <button class="copy-btn" onclick="copyText('${escapeForJs(scaffoldCommand)}')" title="Copy to clipboard">
+            <pre><code>${escapeHtml(commands.scaffold)}</code></pre>
+            <button class="copy-btn" data-command-id="scaffold" title="Copy to clipboard">
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0 3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3 12V2h8v2H5v8H3zm9 2H6V5h6v9z"/></svg>
             </button>
         </div>
@@ -313,8 +355,8 @@ Help me build this App Backend.`;
             <strong>Want to connect to a semantic model?</strong> Use the <code>dataapp</code> template instead:
         </div>
         <div class="code-block">
-            <pre><code>${escapeHtml(dataAppCommand)}</code></pre>
-            <button class="copy-btn" onclick="copyText('${escapeForJs(dataAppCommand)}')" title="Copy to clipboard">
+            <pre><code>${escapeHtml(commands.dataApp)}</code></pre>
+            <button class="copy-btn" data-command-id="dataApp" title="Copy to clipboard">
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0 3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3 12V2h8v2H5v8H3zm9 2H6V5h6v9z"/></svg>
             </button>
         </div>
@@ -334,15 +376,15 @@ Help me build this App Backend.`;
         </div>
         <div class="step-description">Navigate to your project directory</div>
         <div class="code-block">
-            <pre><code>${escapeHtml(cdCommand)}</code></pre>
-            <button class="copy-btn" onclick="copyText('${escapeForJs(cdCommand)}')" title="Copy to clipboard">
+            <pre><code>${escapeHtml(commands.changeDirectory)}</code></pre>
+            <button class="copy-btn" data-command-id="changeDirectory" title="Copy to clipboard">
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0 3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3 12V2h8v2H5v8H3zm9 2H6V5h6v9z"/></svg>
             </button>
         </div>
         <div class="step-description">Edit your app code directly. Run it locally against your Fabric backend.</div>
         <div class="code-block">
-            <pre><code>${escapeHtml(devCommand)}</code></pre>
-            <button class="copy-btn" onclick="copyText('${escapeForJs(devCommand)}')" title="Copy to clipboard">
+            <pre><code>${escapeHtml(commands.startDevelopment)}</code></pre>
+            <button class="copy-btn" data-command-id="startDevelopment" title="Copy to clipboard">
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0 3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3 12V2h8v2H5v8H3zm9 2H6V5h6v9z"/></svg>
             </button>
         </div>
@@ -355,33 +397,43 @@ Help me build this App Backend.`;
         </div>
         <div class="step-description">When you're ready, deploy your updates to Fabric.</div>
         <div class="code-block">
-            <pre><code>${escapeHtml(publishCommand)}</code></pre>
-            <button class="copy-btn" onclick="copyText('${escapeForJs(publishCommand)}')" title="Copy to clipboard">
+            <pre><code>${escapeHtml(commands.publish)}</code></pre>
+            <button class="copy-btn" data-command-id="publish" title="Copy to clipboard">
                 <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V3H4v1zm0 3h1V6H4v1zm0 3h1V9H4v1zm7-6h1V3h-1v1zm0 3h1V6h-1v1zm-3 6h1v-1H8v1zm-4 0h1v-1H4v1zm8-9V1H2v12h2v2h10V4h-2zM3 12V2h8v2H5v8H3zm9 2H6V5h6v9z"/></svg>
             </button>
         </div>
     </div>
 
-    <script>
+    <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
 
-        function copyText(text) {
-            vscode.postMessage({ command: 'copyToClipboard', text: text });
-        }
-
-        function copyPrompt() {
+        document.querySelector('[data-action="copyPrompt"]').addEventListener('click', () => {
             vscode.postMessage({ command: 'copyPrompt' });
-        }
+        });
+
+        document.querySelectorAll('[data-command-id]').forEach(button => {
+            button.addEventListener('click', () => {
+                vscode.postMessage({
+                    command: 'copyToClipboard',
+                    commandId: button.dataset.commandId,
+                });
+            });
+        });
     </script>
 </body>
 </html>`;
     }
 }
 
-function escapeHtml(text: string): string {
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function getNonce(): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let nonce = '';
+    for (let i = 0; i < 32; i++) {
+        nonce += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return nonce;
 }
 
-function escapeForJs(text: string): string {
-    return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+function escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
